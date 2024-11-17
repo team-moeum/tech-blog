@@ -6,12 +6,8 @@ import { Suspense } from "react";
 
 export default async function Home({ searchParams }: { searchParams: { role?: string } }) {
   const selectedRole = searchParams.role || "전체";
-  const { articles: initialArticles, nextCursor } = await getArticleInfoList(
-    undefined,
-    false,
-    selectedRole
-  );
-  const { articles: popularArticles } = await getArticleInfoList(undefined, true);
+  const { articles: initialArticles, nextCursor } = await getArticleInfoList(false, selectedRole);
+  const { articles: popularArticles } = await getArticleInfoList(true);
   const topFiveArticles = getTopFiveArticles(popularArticles);
 
   const allRoles = Array.from(

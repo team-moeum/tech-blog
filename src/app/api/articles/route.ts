@@ -8,9 +8,9 @@ export async function GET(request: Request) {
 
   try {
     const { articles, nextCursor } = await getArticleInfoList(
-      cursor as string,
       false,
-      role as string | undefined
+      role as string,
+      cursor as string
     );
     return NextResponse.json({ articles, nextCursor });
   } catch (error) {

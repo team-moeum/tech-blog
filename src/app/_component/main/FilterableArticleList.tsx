@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Flex, Grid, Text, Button } from "@radix-ui/themes";
 import { Article } from "../../../api/types";
@@ -21,8 +21,12 @@ const FilterableArticleList = ({
   const router = useRouter();
   const initialRole = searchParams.get("role") || "전체";
 
-  const [filteredArticles, setFilteredArticles] = useState<Article[]>(initialArticles);
-  const [nextCursorState, setNextCursorState] = useState<string | null | undefined>(nextCursor);
+  const [filteredArticles, setFilteredArticles] = useState<Article[]>(
+    JSON.parse(sessionStorage.getItem("filteredArticles") || "[]") || initialArticles
+  );
+  const [nextCursorState, setNextCursorState] = useState<string | null | undefined>(
+    sessionStorage.getItem("nextCursorState") || nextCursor
+  );
   const [role, setRole] = useState(initialRole);
 
   const fetchArticles = async (newRole: string, cursor?: string) => {
@@ -31,6 +35,7 @@ const FilterableArticleList = ({
         `/api/articles?${cursor ? `cursor=${cursor}&` : ""}role=${newRole}`
       );
       const data = await response.json();
+      setNextCursorState(data.nextCursor || null);
       return data;
     } catch (error) {
       console.error("Error fetching articles:", error);
@@ -43,6 +48,9 @@ const FilterableArticleList = ({
     router.push(`?${params.toString()}`);
     setRole(newRole);
 
+    sessionStorage.removeItem("filteredArticles");
+    sessionStorage.removeItem("nextCursorState");
+
     const data = await fetchArticles(newRole);
     if (data) {
       setFilteredArticles(data.articles);
@@ -54,11 +62,45 @@ const FilterableArticleList = ({
     if (nextCursorState) {
       const data = await fetchArticles(role, nextCursorState);
       if (data) {
-        setFilteredArticles(prev => [...prev, ...data.articles]);
+        const updatedArticles = [...filteredArticles, ...data.articles];
+        setFilteredArticles(updatedArticles);
         setNextCursorState(data.nextCursor);
+
+        sessionStorage.setItem("filteredArticles", JSON.stringify(updatedArticles));
+        sessionStorage.setItem("nextCursorState", data.nextCursor || "");
       }
     }
   };
+
+  useEffect(() => {
+    const savedArticles = JSON.parse(sessionStorage.getItem("filteredArticles") || "[]");
+    const savedCursor = sessionStorage.getItem("nextCursorState");
+
+    if (savedArticles.length) {
+      setFilteredArticles(savedArticles);
+    } else {
+      setFilteredArticles(initialArticles);
+    }
+
+    setNextCursorState(savedCursor && savedCursor !== "" ? savedCursor : nextCursor);
+
+    const savedScrollPosition = sessionStorage.getItem("scrollPosition");
+    if (savedScrollPosition) {
+      window.scrollTo(0, parseInt(savedScrollPosition, 10));
+    }
+  }, [initialArticles, nextCursor]);
+
+  useEffect(() => {
+    const saveScrollPosition = () => {
+      sessionStorage.setItem("scrollPosition", window.scrollY.toString());
+    };
+
+    window.addEventListener("beforeunload", saveScrollPosition);
+
+    return () => {
+      window.removeEventListener("beforeunload", saveScrollPosition);
+    };
+  }, []);
 
   return (
     <>
@@ -114,7 +156,7 @@ const FilterableArticleList = ({
           />
         ))}
       </Grid>
-      {nextCursorState && (
+      {nextCursorState && nextCursorState !== "" && (
         <Button
           onClick={handleLoadMore}
           radius="full"

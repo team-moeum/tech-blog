@@ -73,8 +73,6 @@ export async function queryNotionDatabase(
       page_size: isPopular ? undefined : 4
     });
 
-    console.log("Notion API Response:", response);
-
     return {
       results: response.results as DatabaseObjectResponse[],
       nextCursor: response.next_cursor
@@ -85,9 +83,9 @@ export async function queryNotionDatabase(
 }
 
 export async function getArticleInfoList(
-  startCursor?: string,
   isPopular = false,
-  role?: string
+  role?: string,
+  startCursor?: string
 ): Promise<{ articles: Article[]; nextCursor?: string | null; role?: string | undefined }> {
   const result = await queryNotionDatabase(
     startCursor,
