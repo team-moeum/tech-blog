@@ -6,6 +6,15 @@ import { Flex, Grid, Text, Button } from "@radix-ui/themes";
 import { Article } from "../../../api/types";
 import { ArticleCard } from "../../../components/ArticleCard/ArticleCard";
 
+const getSessionStorageItem = (key: string, defaultValue: any) => {
+  const item = sessionStorage.getItem(key);
+  return item ? JSON.parse(item) : defaultValue;
+};
+
+const setSessionStorageItem = (key: string, value: any) => {
+  sessionStorage.setItem(key, JSON.stringify(value));
+};
+
 interface FilterableArticleListProps {
   initialArticles: Article[];
   roles: string[];
@@ -22,10 +31,10 @@ const FilterableArticleList = ({
   const initialRole = searchParams.get("role") || "전체";
 
   const [filteredArticles, setFilteredArticles] = useState<Article[]>(
-    JSON.parse(sessionStorage.getItem("filteredArticles") || "[]") || initialArticles
+    getSessionStorageItem("filteredArticles", initialArticles)
   );
   const [nextCursorState, setNextCursorState] = useState<string | null | undefined>(
-    sessionStorage.getItem("nextCursorState") || nextCursor
+    getSessionStorageItem("nextCursorState", nextCursor)
   );
   const [role, setRole] = useState(initialRole);
 
@@ -66,29 +75,18 @@ const FilterableArticleList = ({
         setFilteredArticles(updatedArticles);
         setNextCursorState(data.nextCursor);
 
-        sessionStorage.setItem("filteredArticles", JSON.stringify(updatedArticles));
-        sessionStorage.setItem("nextCursorState", data.nextCursor || "");
+        setSessionStorageItem("filteredArticles", updatedArticles);
+        setSessionStorageItem("nextCursorState", data.nextCursor || null);
       }
     }
   };
 
   useEffect(() => {
-    const savedArticles = JSON.parse(sessionStorage.getItem("filteredArticles") || "[]");
-    const savedCursor = sessionStorage.getItem("nextCursorState");
-
-    if (savedArticles.length) {
-      setFilteredArticles(savedArticles);
-    } else {
-      setFilteredArticles(initialArticles);
-    }
-
-    setNextCursorState(savedCursor && savedCursor !== "" ? savedCursor : nextCursor);
-
     const savedScrollPosition = sessionStorage.getItem("scrollPosition");
     if (savedScrollPosition) {
       window.scrollTo(0, parseInt(savedScrollPosition, 10));
     }
-  }, [initialArticles, nextCursor]);
+  }, []);
 
   useEffect(() => {
     const saveScrollPosition = () => {
@@ -96,7 +94,6 @@ const FilterableArticleList = ({
     };
 
     window.addEventListener("beforeunload", saveScrollPosition);
-
     return () => {
       window.removeEventListener("beforeunload", saveScrollPosition);
     };
