@@ -131,13 +131,27 @@ export async function getPageInfo(pageId: string): Promise<PageObjectResponse> {
 }
 
 /**
+ * get published notion image url
+ */
+
+function covertToPublishImgUrl(url: string, projectId: string) {
+  const encodedUrl = encodeURIComponent(url.split("?")[0]);
+  const publishImgUrl = `https://lemon-mosquito-5dc.notion.site/image/${encodedUrl}?table=block&id=${projectId}&cache=v2`;
+  return publishImgUrl;
+}
+
+/**
  * get article info list from database
  */
 const getCoverImageUrl = (item: DatabaseObjectResponse): string => {
   if (item.cover?.type === "file") {
-    return item.cover?.file.url;
+    const originalImgUrl = item.cover?.file.url;
+    const publishImgUrl = covertToPublishImgUrl(originalImgUrl, item.id);
+    return publishImgUrl;
   } else if (item.cover?.type === "external") {
-    return item.cover?.external.url;
+    const originalImgUrl = item.cover?.external.url;
+    const publishImgUrl = covertToPublishImgUrl(originalImgUrl, item.id);
+    return publishImgUrl;
   } else {
     return "/default_cover_image.png";
   }
