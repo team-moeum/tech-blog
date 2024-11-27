@@ -1,51 +1,103 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Flex, Grid, Text, Button } from "@radix-ui/themes";
 import { Article } from "../../../api/types";
 import { ArticleCard } from "../../../components/ArticleCard/ArticleCard";
 
+const getSessionStorageItem = (key: string, defaultValue: any) => {
+  const item = sessionStorage.getItem(key);
+  return item ? JSON.parse(item) : defaultValue;
+};
+
+const setSessionStorageItem = (key: string, value: any) => {
+  sessionStorage.setItem(key, JSON.stringify(value));
+};
+
 interface FilterableArticleListProps {
-  articles: Article[];
+  initialArticles: Article[];
   roles: string[];
+  nextCursor: string | null | undefined;
 }
 
-const FilterableArticleList = ({ articles, roles }: FilterableArticleListProps) => {
+const FilterableArticleList = ({
+  initialArticles,
+  roles,
+  nextCursor
+}: FilterableArticleListProps) => {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const initialRole = searchParams.get("role") || "전체";
 
-  const [filteredArticles, setFilteredArticles] = useState<Article[]>([]);
-  const [selectedRole, setSelectedRole] = useState<string>(initialRole);
-  const [visibleCount, setVisibleCount] = useState<number>(4);
+  const [filteredArticles, setFilteredArticles] = useState<Article[]>(
+    getSessionStorageItem("filteredArticles", initialArticles)
+  );
+  const [nextCursorState, setNextCursorState] = useState<string | null | undefined>(
+    getSessionStorageItem("nextCursorState", nextCursor)
+  );
+  const [role, setRole] = useState(initialRole);
+
+  const fetchArticles = async (newRole: string, cursor?: string) => {
+    try {
+      const response = await fetch(
+        `/api/articles?${cursor ? `cursor=${cursor}&` : ""}role=${newRole}`
+      );
+      const data = await response.json();
+      setNextCursorState(data.nextCursor || null);
+      return data;
+    } catch (error) {
+      console.error("Error fetching articles:", error);
+    }
+  };
+
+  const handleRoleClick = async (newRole: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("role", newRole);
+    router.push(`?${params.toString()}`);
+    setRole(newRole);
+
+    sessionStorage.removeItem("filteredArticles");
+    sessionStorage.removeItem("nextCursorState");
+
+    const data = await fetchArticles(newRole);
+    if (data) {
+      setFilteredArticles(data.articles);
+      setNextCursorState(data.nextCursor);
+    }
+  };
+
+  const handleLoadMore = async () => {
+    if (nextCursorState) {
+      const data = await fetchArticles(role, nextCursorState);
+      if (data) {
+        const updatedArticles = [...filteredArticles, ...data.articles];
+        setFilteredArticles(updatedArticles);
+        setNextCursorState(data.nextCursor);
+
+        setSessionStorageItem("filteredArticles", updatedArticles);
+        setSessionStorageItem("nextCursorState", data.nextCursor || null);
+      }
+    }
+  };
 
   useEffect(() => {
-    const initialRoleToFilter = initialRole === "전체" ? null : initialRole;
-    const roleToFilter = selectedRole === "전체" ? null : selectedRole;
-    const effectiveRoleToFilter = roleToFilter || initialRoleToFilter;
+    const savedScrollPosition = sessionStorage.getItem("scrollPosition");
+    if (savedScrollPosition) {
+      window.scrollTo(0, parseInt(savedScrollPosition, 10));
+    }
+  }, []);
 
-    const filtered = !effectiveRoleToFilter
-      ? articles
-      : articles.filter(article =>
-          article.properties.role?.multi_select.some(
-            (roleObj: any) => roleObj.name === effectiveRoleToFilter
-          )
-        );
+  useEffect(() => {
+    const saveScrollPosition = () => {
+      sessionStorage.setItem("scrollPosition", window.scrollY.toString());
+    };
 
-    setFilteredArticles(filtered);
-  }, [selectedRole, initialRole, articles]);
-
-  const handleLoadMore = () => {
-    setVisibleCount(prevCount => prevCount + 4);
-  };
-
-  const handleRoleClick = (role: string) => {
-    setSelectedRole(role);
-    const params = new URLSearchParams(window.location.search);
-    params.set("role", role);
-    const newUrl = `${window.location.pathname}?${params.toString()}`;
-    window.history.pushState(null, "", newUrl);
-  };
+    window.addEventListener("beforeunload", saveScrollPosition);
+    return () => {
+      window.removeEventListener("beforeunload", saveScrollPosition);
+    };
+  }, []);
 
   return (
     <>
@@ -62,7 +114,7 @@ const FilterableArticleList = ({ articles, roles }: FilterableArticleListProps) 
             onClick={() => handleRoleClick(role)}
             radius="full"
             style={{
-              backgroundColor: selectedRole === role ? "#25292C" : "#E6E8EB",
+              backgroundColor: role === initialRole ? "#25292C" : "#E6E8EB",
               display: "inline-flex",
               height: "36px",
               padding: "4px 14px",
@@ -73,7 +125,7 @@ const FilterableArticleList = ({ articles, roles }: FilterableArticleListProps) 
               size="3"
               weight="regular"
               style={{
-                color: selectedRole === role ? "#FFFFFF" : "#7B8287"
+                color: role === initialRole ? "#FFFFFF" : "#7B8287"
               }}
             >
               {role}
@@ -90,7 +142,7 @@ const FilterableArticleList = ({ articles, roles }: FilterableArticleListProps) 
         pb="100px"
         style={{ margin: "50px auto 0 auto" }}
       >
-        {filteredArticles.slice(0, visibleCount).map(item => (
+        {filteredArticles.map(item => (
           <ArticleCard
             key={item.pageId}
             pageId={item.pageId}
@@ -101,7 +153,7 @@ const FilterableArticleList = ({ articles, roles }: FilterableArticleListProps) 
           />
         ))}
       </Grid>
-      {visibleCount < filteredArticles.length && (
+      {nextCursorState && nextCursorState !== "" && (
         <Button
           onClick={handleLoadMore}
           radius="full"

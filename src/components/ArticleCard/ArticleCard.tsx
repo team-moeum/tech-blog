@@ -52,7 +52,10 @@ export const ArticleCard = ({
             {title}
           </Text>
           <Text size="1" mt="2" style={{ color: "#7B8287" }}>
-            {showCreatedAt && createdAt.toISOString().slice(0, 10)}
+            {showCreatedAt &&
+              (createdAt instanceof Date
+                ? createdAt.toISOString().slice(0, 10)
+                : new Date(createdAt).toISOString().slice(0, 10))}
           </Text>
           <Box mt={"15px"}>
             {showRole &&

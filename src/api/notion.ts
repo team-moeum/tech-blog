@@ -41,26 +41,79 @@ export async function incrementPageView(
 /**
  * get notion database
  */
-export async function queryNotionDatabase(): Promise<DatabaseObjectResponse[]> {
+export async function queryNotionDatabase(
+  startCursor?: string,
+  isPopular = false,
+  role?: string | undefined
+) {
   try {
+    const filters: any = [
+      {
+        property: "exposure",
+        checkbox: {
+          equals: true
+        }
+      }
+    ];
+
+    if (role) {
+      filters.push({
+        property: "role",
+        multi_select: {
+          contains: role
+        }
+      });
+    }
     const response = await notionClient.databases.query({
       database_id: process.env.NOTION_DATABASE_ID!,
       filter: {
-        and: [
-          {
-            property: "exposure",
-            checkbox: {
-              equals: true
-            }
-          }
-        ]
-      }
+        and: filters
+      },
+      start_cursor: startCursor || undefined,
+      page_size: isPopular ? undefined : 4
     });
 
-    return response.results as DatabaseObjectResponse[];
+    return {
+      results: response.results as DatabaseObjectResponse[],
+      nextCursor: response.next_cursor
+    };
   } catch (error) {
-    throw new Error("Error in queryNotionDatabase function");
+    console.error("Error in queryNotionDatabase function:", error);
   }
+}
+
+export async function getArticleInfoList(
+  isPopular = false,
+  role?: string,
+  startCursor?: string
+): Promise<{ articles: Article[]; nextCursor?: string | null; role?: string | undefined }> {
+  const result = await queryNotionDatabase(
+    startCursor,
+    isPopular,
+    role === "전체" ? undefined : role
+  );
+
+  if (!result) {
+    return { articles: [], nextCursor: null };
+  }
+
+  const { results, nextCursor } = result;
+
+  const articleList = results.map(item => {
+    const itemName = item.properties.name as any;
+    const title = itemName.title[0].plain_text;
+    const coverImageUrl = getCoverImageUrl(item);
+
+    return {
+      pageId: item.id,
+      title: title,
+      createdAt: new Date(item.created_time),
+      thumbnailUrl: coverImageUrl,
+      properties: item.properties
+    };
+  });
+
+  return { articles: articleList as Article[], nextCursor };
 }
 
 /**
@@ -103,27 +156,6 @@ const getCoverImageUrl = (item: DatabaseObjectResponse): string => {
     return "/default_cover_image.png";
   }
 };
-
-export async function getArticleInfoList(): Promise<Article[]> {
-  const database = await queryNotionDatabase();
-
-  const articleList = database.map(item => {
-    const itemName = item.properties.name as any;
-    const title = itemName.title[0].plain_text;
-    const coverImageUrl = getCoverImageUrl(item);
-
-    return {
-      pageId: item.id,
-      title: title,
-      createdAt: new Date(item.created_time),
-      thumbnailUrl: coverImageUrl,
-      properties: item.properties
-    };
-  });
-
-  return articleList as Article[];
-}
-
 /**
  * get notion page markdown
  * @param pageId notion page id
@@ -172,7 +204,6 @@ export const searchArticle = async (key: string) => {
         ]
       }
     });
-
     const result = response.results as DatabaseObjectResponse[];
 
     const titleList = result.map(item => {
@@ -239,7 +270,10 @@ export async function getPostPage(pageId: string): Promise<PostPage> {
 // 조회수 순으로 상위 5개
 export function getTopFiveArticles(articles: Article[]): Article[] {
   const topFiveArticles = articles
-    .sort((a, b) => (b.properties.views?.number ?? 0) - (a.properties.views?.number ?? 0))
+    .sort(
+      (postA, postB) =>
+        (postB.properties.views?.number ?? 0) - (postA.properties.views?.number ?? 0)
+    )
     .slice(0, 5);
 
   return topFiveArticles;
