@@ -12,7 +12,6 @@
   "endOfLine": "auto",
   "htmlWhitespaceSensitivity": "css",
   "embeddedLanguageFormatting": "off",
-  "plugins": ["@trivago/prettier-plugin-sort-imports"],
   "importOrder":
     [
       "^@app/(.*)$",
