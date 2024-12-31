@@ -16,7 +16,7 @@ export async function generateMetadata({
   const defaultImageUrl = "https://blog.fin-hub.co.kr/default_cover_image.png";
   const imageUrl = postInfo.thumbnailUrl || defaultImageUrl;
   const title = `${postInfo.title}`;
-  const description = "FotCamp 기술 블로그";
+  const description = "Moeum 기술 블로그";
 
   const headersList = headers();
   const host = headersList.get("host") as string;
@@ -31,7 +31,7 @@ export async function generateMetadata({
       title,
       description,
       url: pageUrl,
-      siteName: "FotCamp 기술 블로그",
+      siteName: "Moeum 기술 블로그",
       images: [
         {
           url: imageUrl,

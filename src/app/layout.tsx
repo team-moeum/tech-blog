@@ -10,27 +10,27 @@ import { Footer } from "@/components/Footer/Footer";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "FotCamp Tech Blog",
-  description: "FotCamp Tech Blog",
+  title: "Moeum Tech Blog",
+  description: "Moeum Tech Blog",
   openGraph: {
-    title: "FotCamp Tech Blog",
-    description: "FotCamp의 기술 블로그입니다.",
+    title: "Moeum Tech Blog",
+    description: "Moeum의 기술 블로그입니다.",
     url: "https://blog.fin-hub.co.kr",
-    siteName: "FotCamp Tech Blog",
+    siteName: "Moeum Tech Blog",
     images: [
       {
         url: "https://blog.fin-hub.co.kr/default_cover_image.png",
         width: 1200,
         height: 630,
-        alt: "FotCamp Tech Blog Default Image"
+        alt: "Moeum Tech Blog Default Image"
       }
     ],
     type: "website"
   },
   twitter: {
     card: "summary_large_image",
-    title: "FotCamp Tech Blog",
-    description: "FotCamp의 기술 블로그입니다.",
+    title: "Moeum Tech Blog",
+    description: "Moeum의 기술 블로그입니다.",
     images: ["https://blog.fin-hub.co.kr/default_cover_image.png"]
   }
 };
