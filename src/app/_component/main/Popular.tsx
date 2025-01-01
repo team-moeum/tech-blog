@@ -54,7 +54,7 @@ const PrevArrow = (props: any) => {
 const Popular = ({ topArticles }: PopularProp) => {
   const settings = {
     dots: false,
-    infinite: true,
+    infinite: topArticles.length > 1,
     speed: 500,
     slidesToShow: 1,
     slidesToScroll: 1,
@@ -76,7 +76,7 @@ const Popular = ({ topArticles }: PopularProp) => {
         }}
       >
         <Slider {...settings}>
-          {topArticles.map(item => (
+          {[...topArticles].map(item => (
             <ArticleCard
               key={item.pageId}
               pageId={item.pageId}
