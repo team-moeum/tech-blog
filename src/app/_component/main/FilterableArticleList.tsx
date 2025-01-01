@@ -7,11 +7,13 @@ import { Article } from "../../../api/types";
 import { ArticleCard } from "../../../components/ArticleCard/ArticleCard";
 
 const getSessionStorageItem = (key: string, defaultValue: any) => {
+  if (typeof window === "undefined") return defaultValue;
   const item = sessionStorage.getItem(key);
   return item ? JSON.parse(item) : defaultValue;
 };
 
 const setSessionStorageItem = (key: string, value: any) => {
+  if (typeof window === "undefined") return;
   sessionStorage.setItem(key, JSON.stringify(value));
 };
 
