@@ -17,7 +17,7 @@ export default function GiscusBlock() {
     scriptElem.crossOrigin = "anonymous";
 
     const giscusAttributes = {
-      "data-repo": "Moeum/tech-blog",
+      "data-repo": "team-moeum/tech-blog",
       "data-repo-id": "R_kgDOMge0hw",
       "data-category": "Comments",
       "data-category-id": "DIC_kwDOMge0h84CihXP",
