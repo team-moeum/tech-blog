@@ -37,7 +37,7 @@ export function NavBar() {
               color: "var(--gray-12)"
             }}
           >
-            <Strong>fotcamp </Strong>tech
+            <Strong>Moeum </Strong>tech
           </Text>
         </Link>
         <Flex align="center" gap="24px">

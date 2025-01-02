@@ -24,7 +24,7 @@ export function Footer() {
           }}
         >
           <GitHubLogoIcon width={"32px"} height={"32px"} />
-          <Text size={"1"}>© 2024 fotcamp</Text>
+          <Text size={"1"}>© 2024 Moeum</Text>
         </Link>
       </Flex>
       <Text size={"1"} color="gray">

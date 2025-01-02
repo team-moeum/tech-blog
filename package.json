@@ -38,6 +38,7 @@
     "@chromatic-com/storybook": "^1.6.1",
     "@commitlint/cli": "^19.4.0",
     "@commitlint/config-conventional": "^19.2.2",
+    "@ianvs/prettier-plugin-sort-imports": "^4.4.0",
     "@storybook/addon-essentials": "^8.2.8",
     "@storybook/addon-interactions": "^8.2.8",
     "@storybook/addon-links": "^8.2.8",
