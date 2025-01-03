@@ -13,6 +13,19 @@ const nextConfig = {
       "www.notion.so",
       "lemon-mosquito-5dc.notion.site"
     ]
+  },
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "s-maxage=31536000, max-age=0"
+          }
+        ]
+      }
+    ];
   }
 };
 
